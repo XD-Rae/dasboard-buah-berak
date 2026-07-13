@@ -9,7 +9,7 @@ import {
   Trophy,
   Info,
   AlertCircle,
-  Filter, // Tambahan Icon Filter
+  Filter,
 } from "lucide-react";
 import {useAuth} from "../../contexts/AuthContext";
 
@@ -18,7 +18,7 @@ interface BantuanData {
   _id: string;
   rank: number;
   nama: string;
-  dusun: string; // Pastikan backend SAW mengembalikan field ini!
+  dusun?: string; // Dibuat opsional agar tidak error jika tidak ada di level atas
   finalScore: number;
   raw: {
     gaji: number;
@@ -27,6 +27,7 @@ interface BantuanData {
     penyakit: string;
     rumah: string;
     aset: string;
+    dusun?: string; // Ditambahkan di sini jaga-jaga posisi data dari backend
   };
 }
 
@@ -36,28 +37,31 @@ const BantuanList: React.FC = () => {
   const {user} = useAuth() as any;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDusun, setSelectedDusun] = useState(""); // State Filter Dusun
+  const [selectedDusun, setSelectedDusun] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 2. LOGIKA FILTERING UTAMA
+  // 2. LOGIKA FILTERING UTAMA (Sudah Diperbaiki)
   const filteredData = (bantuan || []).filter((item: BantuanData) => {
-    console.log(item);
+    if (!item) return false;
+
+    // Ambil nilai dusun, cek di luar atau di dalam 'raw' sebagai tameng
+    const itemDusun = item.dusun || item.raw?.dusun;
+
     // --- Filter 1: RBAC (Role Based Access Control) ---
     // Jika user adalah KDUS, paksa filter hanya dusun miliknya
     if (user?.role === "KDUS" && user?.idDusun) {
-      if (item?.raw.dusun !== user.idDusun) {
+      if (itemDusun !== user.idDusun) {
         return false;
       }
     }
 
     // --- Filter 2: Pencarian Teks ---
-    const matchesSearch = item.nama
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      item.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
 
     // --- Filter 3: Dropdown Dusun (Admin Only) ---
-    const matchesDusun = selectedDusun === "" || item.dusun === selectedDusun;
+    const matchesDusun = selectedDusun === "" || itemDusun === selectedDusun;
 
     return matchesSearch && matchesDusun;
   });
@@ -318,7 +322,7 @@ const BantuanList: React.FC = () => {
               </button>
 
               <span className="px-4 py-1 text-sm font-medium bg-white border rounded-md flex items-center">
-                Hal. {currentPage} / {totalPages}
+                Hal. {currentPage} / {totalPages || 1}
               </span>
 
               <button
@@ -326,7 +330,7 @@ const BantuanList: React.FC = () => {
                 onClick={() =>
                   handlePageChange(Math.min(totalPages, currentPage + 1))
                 }
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
               >
                 <ChevronRight size={20} />
               </button>

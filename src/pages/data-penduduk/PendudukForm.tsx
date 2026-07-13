@@ -4,9 +4,10 @@ import {useDataContext} from "../../contexts/DataContext"; // Pastikan path cont
 import {ArrowLeft, Save} from "lucide-react";
 import toast from "react-hot-toast";
 
-// Interface untuk Form State
+// Interface untuk Form State (Ditambah dusun)
 interface PendudukFormData {
   nama: string;
+  dusun: string;
   gaji_pokok: number | "";
   usia: number | "";
   tanggungan: number | "";
@@ -17,6 +18,7 @@ interface PendudukFormData {
 
 const emptyPenduduk: PendudukFormData = {
   nama: "",
+  dusun: "",
   gaji_pokok: "",
   usia: "",
   tanggungan: "",
@@ -54,8 +56,8 @@ const PendudukForm: React.FC = () => {
   const {id} = useParams<{id: string}>();
   const navigate = useNavigate();
 
-  // Pastikan function ini sudah di-expose di Context Anda
-  const {addPenduduk, updatePenduduk, getPendudukById} =
+  // Menambahkan dusun dari Context
+  const {addPenduduk, updatePenduduk, getPendudukById, dusun} =
     useDataContext() as any;
 
   const [formData, setFormData] = useState<PendudukFormData>(emptyPenduduk);
@@ -73,6 +75,7 @@ const PendudukForm: React.FC = () => {
           if (existingData) {
             setFormData({
               nama: existingData.nama,
+              dusun: existingData.dusun || "", // Set data dusun saat edit
               gaji_pokok: existingData.gaji_pokok,
               usia: existingData.usia,
               tanggungan: existingData.tanggungan,
@@ -116,6 +119,7 @@ const PendudukForm: React.FC = () => {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.nama.trim()) newErrors.nama = "Nama wajib diisi";
+    if (!formData.dusun) newErrors.dusun = "Dusun wajib dipilih"; // Validasi dusun
     if (formData.gaji_pokok === "")
       newErrors.gaji_pokok = "Gaji pokok wajib diisi";
     if (formData.usia === "") newErrors.usia = "Usia wajib diisi";
@@ -172,7 +176,7 @@ const PendudukForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Nama */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nama Lengkap *
               </label>
@@ -186,6 +190,32 @@ const PendudukForm: React.FC = () => {
               />
               {errors.nama && (
                 <p className="text-sm text-red-600 mt-1">{errors.nama}</p>
+              )}
+            </div>
+
+            {/* Dropdown Dusun */}
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Dusun *
+              </label>
+              <select
+                name="dusun"
+                value={formData.dusun}
+                onChange={handleChange}
+                disabled={loading}
+                className={`w-full rounded-md border px-3 py-2 bg-white focus:ring-blue-500 focus:border-blue-500 ${errors.dusun ? "border-red-500" : "border-gray-300"}`}
+              >
+                <option value="">-- Pilih Dusun --</option>
+                {/* Mapping data dusun dari context. Sesuaikan d.id dan d.nama dengan struktur data dari API/Context kamu */}
+                {dusun &&
+                  dusun.map((d: any) => (
+                    <option key={d.idDusun} value={d.idDusun}>
+                      {d.nama_dusun}
+                    </option>
+                  ))}
+              </select>
+              {errors.dusun && (
+                <p className="text-sm text-red-600 mt-1">{errors.dusun}</p>
               )}
             </div>
 
