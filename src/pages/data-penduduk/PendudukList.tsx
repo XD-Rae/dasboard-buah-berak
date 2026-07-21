@@ -140,12 +140,16 @@ const PendudukList: React.FC = () => {
       const token = localStorage.getItem("token"); // Atau ambil dari cookie jika pakai httpOnly
 
       // Pastikan URL Backend benar (sesuai setting proxy atau absolute URL)
-      await axios.post("http://:3008/api/penduduk/import", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
+      await axios.post(
+        "https://desa-buah-berak.vercel.app/api/penduduk/import",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       toast.success("Import data Excel berhasil!");
 
