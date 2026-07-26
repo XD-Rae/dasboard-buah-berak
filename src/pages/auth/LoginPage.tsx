@@ -1,12 +1,15 @@
-import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {useAuth} from "../../contexts/AuthContext";
-import {Lock, Mail, AlertCircle} from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { Lock, Mail, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+
+// Import logo desa Anda
+import logoDesa from "../../assets/images/LogoDesaBuahBerak.png";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const {login, user} = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,8 +52,12 @@ const LoginPage: React.FC = () => {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="h-20 w-20 bg-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-              <Mail size={40} className="text-white" />
+            <div className="mx-auto mb-4 flex items-center justify-center">
+              <img 
+                src={logoDesa} 
+                alt="Logo Desa" 
+                className="h-36 w-auto object-contain" 
+              />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Selamat Datang</h2>
             <p className="text-gray-600 mt-2">

@@ -1,6 +1,6 @@
 import axios from "axios";
 import {
-  Aparatur, // Mengganti Faculty menjadi Aparatur
+  Aparatur, 
   Event,
   Role,
   SURAT_KELUAR,

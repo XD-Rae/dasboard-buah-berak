@@ -6,7 +6,7 @@ import {
   Users, // Data Aparatur / Penduduk
   Map, // Data Dusun (MapPin/Map)
   HandHeart, // Bantuan (HandHeart/HeartHandshake)
-  CalendarDays, // Data Kegiatan
+  CalendarDays, // Data Informasi
   FileText, // Data Laporan
   Mail, // Surat Masuk (Mail/Inbox)
   Send, // Surat Keluar
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({isOpen, toggleSidebar}) => {
                 <>
                   <NavLink to="/events" className={navLinkClass}>
                     <CalendarDays size={18} />
-                    <span>Agenda Kegiatan</span>
+                    <span>Agenda Informasi</span>
                   </NavLink>
 
                   <NavLink to="/surat-masuk" className={navLinkClass}>

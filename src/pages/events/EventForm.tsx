@@ -26,6 +26,7 @@ const eventTypes = [
   "Senam",
   "Posyandu",
   "PKK",
+  "Dana Desa",
   "Lainnya",
 ];
 
@@ -86,11 +87,11 @@ const EventForm: React.FC = () => {
             }
           } else {
             navigate("/events");
-            toast.error("Kegiatan tidak ditemukan");
+            toast.error("Informasi tidak ditemukan");
           }
         } catch (error) {
           console.error("Error fetching event:", error);
-          toast.error("Gagal mengambil data kegiatan");
+          toast.error("Gagal mengambil data Informasi");
           navigate("/events");
         }
       }
@@ -137,15 +138,15 @@ const EventForm: React.FC = () => {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!event.nama.trim()) newErrors.nama = "Nama kegiatan wajib diisi";
-    if (!selectedDate) newErrors.tanggal = "Tanggal kegiatan wajib diisi";
-    if (!event.lokasi.trim()) newErrors.lokasi = "Lokasi kegiatan wajib diisi";
+    if (!event.nama.trim()) newErrors.nama = "Nama Informasi wajib diisi";
+    if (!selectedDate) newErrors.tanggal = "Tanggal Informasi wajib diisi";
+    if (!event.lokasi.trim()) newErrors.lokasi = "Lokasi Informasi wajib diisi";
     if (!event.deskripsi.trim())
-      newErrors.deskripsi = "Deskripsi kegiatan wajib diisi";
+      newErrors.deskripsi = "Deskripsi Informasi wajib diisi";
     if (isOtherType && !customType.trim()) {
-      newErrors.jenis = "Jenis kegiatan wajib diisi";
+      newErrors.jenis = "Jenis Informasi wajib diisi";
     } else if (!isOtherType && !event.jenis) {
-      newErrors.jenis = "Jenis kegiatan wajib diisi";
+      newErrors.jenis = "Jenis Informasi wajib diisi";
     }
 
     setErrors(newErrors);
@@ -201,10 +202,10 @@ const EventForm: React.FC = () => {
     try {
       if (isEditing && id) {
         await updateEvent(id, event);
-        toast.success("Kegiatan berhasil diperbarui");
+        toast.success("Informasi berhasil diperbarui");
       } else {
         await addEvent(event);
-        toast.success("Kegiatan berhasil ditambahkan");
+        toast.success("Informasi berhasil ditambahkan");
       }
       navigate("/events");
     } catch (err) {
@@ -219,7 +220,7 @@ const EventForm: React.FC = () => {
           <ArrowLeft size={20} />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">
-          {isEditing ? "Edit Kegiatan" : "Tambah Kegiatan Baru"}
+          {isEditing ? "Edit Informasi" : "Tambah Informasi Baru"}
         </h1>
       </div>
 
@@ -246,7 +247,7 @@ const EventForm: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Foto Kegiatan
+                    Foto Informasi
                   </label>
                   <div className="mt-1 flex items-center">
                     <input
@@ -276,7 +277,7 @@ const EventForm: React.FC = () => {
                 htmlFor="nama"
                 className="block text-sm font-medium text-gray-700"
               >
-                Nama Kegiatan <span className="text-red-500">*</span>
+                Nama Informasi <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -298,7 +299,7 @@ const EventForm: React.FC = () => {
                 htmlFor="jenis"
                 className="block text-sm font-medium text-gray-700"
               >
-                Jenis Kegiatan <span className="text-red-500">*</span>
+                Jenis Informasi <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
                 <select
@@ -310,7 +311,7 @@ const EventForm: React.FC = () => {
                     errors.jenis ? "border-red-300" : "border-gray-300"
                   } px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                 >
-                  <option value="">Pilih Jenis Kegiatan</option>
+                  <option value="">Pilih Jenis Informasi</option>
                   {eventTypes.map((type) => (
                     <option key={type} value={type}>
                       {type}
@@ -323,7 +324,7 @@ const EventForm: React.FC = () => {
                     type="text"
                     value={customType}
                     onChange={handleCustomTypeChange}
-                    placeholder="Masukkan jenis kegiatan lainnya"
+                    placeholder="Masukkan jenis Informasi lainnya"
                     className={`mt-2 block w-full rounded-md border ${
                       errors.jenis ? "border-red-300" : "border-gray-300"
                     } px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500`}
@@ -414,7 +415,7 @@ const EventForm: React.FC = () => {
               type="submit"
               className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
-              {isEditing ? "Perbarui Kegiatan" : "Simpan Kegiatan"}
+              {isEditing ? "Perbarui Informasi" : "Simpan Informasi"}
             </button>
           </div>
         </form>
@@ -425,7 +426,7 @@ const EventForm: React.FC = () => {
         title="Konfirmasi Simpan"
         message={`Apakah Anda yakin ingin ${
           isEditing ? "memperbarui" : "menyimpan"
-        } kegiatan ini?`}
+        } informasi ini?`}
         confirmLabel={isEditing ? "Perbarui" : "Simpan"}
         onConfirm={handleConfirmSave}
         onCancel={() => setShowSaveConfirm(false)}
