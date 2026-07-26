@@ -29,7 +29,7 @@ const EventDetail: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error("Error fetching event:", err);
-        setError("Gagal memuat data kegiatan");
+        setError("Gagal memuat data Informasi");
       } finally {
         setLoading(false);
       }
@@ -52,17 +52,17 @@ const EventDetail: React.FC = () => {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-gray-900">
-          Kegiatan tidak ditemukan
+          Informasi tidak ditemukan
         </h2>
         <p className="mt-2 text-gray-600">
-          {error || "Data kegiatan dengan ID tersebut tidak ditemukan."}
+          {error || "Data Informasi dengan ID tersebut tidak ditemukan."}
         </p>
         <Link
           to="/events"
           className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-800"
         >
           <ArrowLeft size={16} className="mr-2" />
-          Kembali ke daftar kegiatan
+          Kembali ke daftar informasi
         </Link>
       </div>
     );
@@ -70,15 +70,15 @@ const EventDetail: React.FC = () => {
 
   const handleDelete = async () => {
     if (
-      window.confirm(`Anda yakin ingin menghapus kegiatan "${event.nama}"?`)
+      window.confirm(`Anda yakin ingin menghapus informasi "${event.nama}"?`)
     ) {
       try {
         await deleteEvent(event._id);
-        toast.success("Kegiatan berhasil dihapus");
+        toast.success("Informasi berhasil dihapus");
         navigate("/events");
       } catch (error) {
         console.error("Error deleting event:", error);
-        toast.error("Gagal menghapus kegiatan");
+        toast.error("Gagal menghapus Informasi");
       }
     }
   };
@@ -90,7 +90,7 @@ const EventDetail: React.FC = () => {
           <Link to="/events" className="mr-4 text-gray-500 hover:text-gray-700">
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Detail Kegiatan</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Detail Informasi</h1>
         </div>
         <div className="flex space-x-2">
           <Link
