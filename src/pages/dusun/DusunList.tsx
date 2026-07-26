@@ -11,6 +11,7 @@ import {
   ChevronRight,
   MapPin, // Ikon tambahan untuk Dusun
   Users,
+  Eye,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ConfirmationDialog from "../../components/shared/ConfirmationDialog";
@@ -213,6 +214,13 @@ const DusunList: React.FC = () => {
                     {/* Kolom Aksi */}
                     <td className="whitespace-nowrap px-6 py-4 text-center text-sm font-medium">
                       <div className="flex justify-center space-x-3">
+                        <Link
+                          to={`/dusun/${item.idDusun}`}
+                          className="rounded-md bg-indigo-50 p-2 text-indigo-600 hover:bg-indigo-100"
+                          title="Lihat Detail"
+                        >
+                          <Eye size={18} />
+                        </Link>
                         {/* Tombol Edit */}
                         <Link
                           to={`/dusun/edit/${item.idDusun}`}
