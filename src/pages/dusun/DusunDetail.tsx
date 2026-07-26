@@ -31,18 +31,19 @@ const DusunDetail: React.FC = () => {
 
   // Mengambil fungsi dari Context
   const {getDusunById, deleteDusun} = useDataContext() as any;
-
+  
   const [dusun, setDusun] = useState<Dusun | null>(null);
+  // console.log(dusun)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   useEffect(() => {
     const fetchDusun = async () => {
       try {
         setLoading(true);
         // ID yang dikirim di URL adalah UUID (idDusun)
         const data = await getDusunById(id || "");
-
+        
         if (!data) {
           setError("Data Dusun tidak ditemukan");
         } else {
@@ -178,7 +179,7 @@ const DusunDetail: React.FC = () => {
                   Kepala Dusun
                 </p>
                 <p className="text-lg font-medium text-gray-900">
-                  {dusun.kepala_dusun}
+                  {dusun.kepala_dusun.NAMA}
                 </p>
               </div>
             </div>

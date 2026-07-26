@@ -255,6 +255,7 @@ export const DataProvider: React.FC<{children: React.ReactNode}> = ({
   const getDusunById = async (id: string): Promise<Dusun | undefined> => {
     try {
       const data = await dusunAPI.getById(id);
+      console.log(data)
       return data;
     } catch (err) {
       console.error(err);
