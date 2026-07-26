@@ -155,9 +155,9 @@ const DusunDetail: React.FC = () => {
             </div>
             <div>
               <h2 className="text-3xl font-bold">{dusun.nama_dusun}</h2>
-              <p className="text-blue-100 mt-1 opacity-90">
+              {/* <p className="text-blue-100 mt-1 opacity-90">
                 ID Wilayah: {dusun.idDusun}
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
