@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect, useMemo} from "react";
 import {Link} from "react-router-dom";
 import {useDataContext} from "../../contexts/DataContext";
 import {
@@ -18,7 +18,7 @@ interface BantuanData {
   _id: string;
   rank: number;
   nama: string;
-  dusun?: string; // Dibuat opsional agar tidak error jika tidak ada di level atas
+  dusun?: string;
   finalScore: number;
   raw: {
     gaji: number;
@@ -27,13 +27,13 @@ interface BantuanData {
     penyakit: string;
     rumah: string;
     aset: string;
-    dusun?: string; // Ditambahkan di sini jaga-jaga posisi data dari backend
+    dusun?: string;
   };
 }
 
 const BantuanList: React.FC = () => {
   // 1. Ambil data bantuan, dusun, dan USER LOGIN
-  const {bantuan, dusun} = useDataContext() as any;
+  const {bantuan = [], dusun = []} = useDataContext() as any;
   const {user} = useAuth() as any;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,36 +41,44 @@ const BantuanList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 2. LOGIKA FILTERING UTAMA (Sudah Diperbaiki)
-  const filteredData = (bantuan || []).filter((item: BantuanData) => {
-    if (!item) return false;
+  // 2. LOGIKA FILTERING UTAMA
+  const filteredData = useMemo(() => {
+    return (bantuan || []).filter((item: BantuanData) => {
+      if (!item) return false;
 
-    // Ambil nilai dusun, cek di luar atau di dalam 'raw' sebagai tameng
-    const itemDusun = item.dusun || item.raw?.dusun;
+      // Ambil nilai dusun, cek di luar atau di dalam 'raw'
+      const itemDusun = item.dusun || item.raw?.dusun;
 
-    // --- Filter 1: RBAC (Role Based Access Control) ---
-    // Jika user adalah KDUS, paksa filter hanya dusun miliknya
-    if (user?.role === "KDUS" && user?.idDusun) {
-      if (itemDusun !== user.idDusun) {
-        return false;
+      // Filter 1: RBAC (Role Based Access Control)
+      if (user?.role === "KDUS" && user?.idDusun) {
+        if (itemDusun !== user.idDusun) {
+          return false;
+        }
       }
-    }
 
-    // --- Filter 2: Pencarian Teks ---
-    const matchesSearch =
-      item.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
+      // Filter 2: Pencarian Teks
+      const matchesSearch =
+        item.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
 
-    // --- Filter 3: Dropdown Dusun (Admin Only) ---
-    const matchesDusun = selectedDusun === "" || itemDusun === selectedDusun;
+      // Filter 3: Dropdown Dusun (Admin Only)
+      const matchesDusun = selectedDusun === "" || itemDusun === selectedDusun;
 
-    return matchesSearch && matchesDusun;
-  });
+      return matchesSearch && matchesDusun;
+    });
+  }, [bantuan, user, searchTerm, selectedDusun]);
 
-  // Pagination Logic
-  const indexOfLastItem = currentPage * itemsPerPage;
+  // 3. AUTOMATIC RESET PAGINATION SAAT FILTER BERUBAH
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDusun, searchTerm]);
+
+  // 4. PAGINATION & SLICING LOGIC
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+  const activePage = currentPage > totalPages ? 1 : currentPage;
+
+  const indexOfLastItem = activePage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -81,7 +89,7 @@ const BantuanList: React.FC = () => {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(number);
+    }).format(number || 0);
   };
 
   const getStatusLabel = (score: number) => {
@@ -169,8 +177,8 @@ const BantuanList: React.FC = () => {
             >
               <option value="">Semua Dusun</option>
               {dusun?.map((d: any) => (
-                <option key={d.idDusun} value={d.idDusun}>
-                  {d.nama_dusun}
+                <option key={d.idDusun || d._id} value={d.idDusun || d._id}>
+                  {d.nama_dusun || d.nama}
                 </option>
               ))}
             </select>
@@ -206,76 +214,86 @@ const BantuanList: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {currentItems.length > 0 ? (
-                currentItems.map((item: BantuanData) => (
-                  <tr
-                    key={item._id}
-                    className={`hover:bg-gray-50 transition-colors ${
-                      item.rank <= 3 ? "bg-yellow-50/30" : ""
-                    }`}
-                  >
-                    {/* Kolom Ranking */}
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div
-                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
-                          item.rank === 1
-                            ? "bg-yellow-100 text-yellow-700 ring-2 ring-yellow-400"
-                            : item.rank === 2
-                              ? "bg-gray-200 text-gray-700 ring-2 ring-gray-400"
-                              : item.rank === 3
-                                ? "bg-orange-100 text-orange-800 ring-2 ring-orange-400"
-                                : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {item.rank}
-                      </div>
-                    </td>
+                currentItems.map((item: BantuanData, index: number) => {
+                  // PERHITUNGAN RANK/NOMOR TERHITUNG ULANG SESUAI FILTER
+                  const calculatedRank = indexOfFirstItem + index + 1;
 
-                    {/* Kolom Nama */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">
-                        {item.nama}
-                      </div>
-                      <div className="text-xs text-gray-500 md:hidden">
-                        Skor: {item.finalScore?.toFixed(4)}
-                      </div>
-                    </td>
+                  return (
+                    <tr
+                      // Key dinamis memaksa React melakukan re-render utuh saat filter dusun berganti
+                      key={`${selectedDusun}-${item._id}-${index}`}
+                      className={`hover:bg-gray-50 transition-colors ${
+                        calculatedRank <= 3 ? "bg-yellow-50/30" : ""
+                      }`}
+                    >
+                      {/* Kolom Ranking (Menggunakan Ranking Terhitung Ulang) */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div
+                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
+                            calculatedRank === 1
+                              ? "bg-yellow-100 text-yellow-700 ring-2 ring-yellow-400"
+                              : calculatedRank === 2
+                                ? "bg-gray-200 text-gray-700 ring-2 ring-gray-400"
+                                : calculatedRank === 3
+                                  ? "bg-orange-100 text-orange-800 ring-2 ring-orange-400"
+                                  : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {calculatedRank}
+                        </div>
+                      </td>
 
-                    {/* Kolom Skor Akhir */}
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="text-lg font-bold text-blue-600">
-                        {item.finalScore?.toFixed(4)}
-                      </div>
-                    </td>
+                      {/* Kolom Nama */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">
+                          {item.nama}
+                        </div>
+                        <div className="text-xs text-gray-500 md:hidden">
+                          Skor: {item.finalScore?.toFixed(4)}
+                        </div>
+                      </td>
 
-                    {/* Kolom Status */}
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      {getStatusLabel(item.finalScore)}
-                    </td>
+                      {/* Kolom Skor Akhir */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="text-lg font-bold text-blue-600">
+                          {item.finalScore?.toFixed(4)}
+                        </div>
+                      </td>
 
-                    {/* Kolom Info Ekonomi */}
-                    <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">
-                      <div className="flex flex-col text-xs gap-1">
-                        <span className="flex items-center gap-1">
-                          💰 {formatRupiah(item.raw?.gaji || 0)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          👨‍👩‍👧‍👦 {item.raw?.tanggungan} Tanggungan
-                        </span>
-                      </div>
-                    </td>
+                      {/* Kolom Status */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {getStatusLabel(item.finalScore)}
+                      </td>
 
-                    {/* Kolom Aksi */}
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                      <Link
-                        to={`/bantuan/${item._id}`}
-                        className="text-gray-400 hover:text-blue-600 transition-colors inline-flex items-center justify-center p-2 rounded-full hover:bg-blue-50"
-                        title="Lihat Detail"
-                      >
-                        <Info size={20} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
+                      {/* Kolom Info Ekonomi */}
+                      <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">
+                        <div className="flex flex-col text-xs gap-1">
+                          <span className="flex items-center gap-1">
+                            💰 {formatRupiah(item.raw?.gaji || 0)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            👨‍👩‍👧‍👦 {item.raw?.tanggungan || 0} Tanggungan
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Kolom Aksi */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <Link
+                          to={`/bantuan/${item._id}`}
+                          state={{
+                            rank: calculatedRank,
+                            finalScore: item.finalScore,
+                          }}
+                          className="text-gray-400 hover:text-blue-600 transition-colors inline-flex items-center justify-center p-2 rounded-full hover:bg-blue-50"
+                          title="Lihat Detail"
+                        >
+                          <Info size={20} />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td
@@ -315,22 +333,22 @@ const BantuanList: React.FC = () => {
             <div className="flex space-x-1">
               <button
                 className="p-1 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
+                onClick={() => handlePageChange(Math.max(1, activePage - 1))}
+                disabled={activePage === 1}
               >
                 <ChevronLeft size={20} />
               </button>
 
               <span className="px-4 py-1 text-sm font-medium bg-white border rounded-md flex items-center">
-                Hal. {currentPage} / {totalPages || 1}
+                Hal. {activePage} / {totalPages}
               </span>
 
               <button
                 className="p-1 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 onClick={() =>
-                  handlePageChange(Math.min(totalPages, currentPage + 1))
+                  handlePageChange(Math.min(totalPages, activePage + 1))
                 }
-                disabled={currentPage === totalPages || totalPages === 0}
+                disabled={activePage === totalPages || totalPages === 0}
               >
                 <ChevronRight size={20} />
               </button>
