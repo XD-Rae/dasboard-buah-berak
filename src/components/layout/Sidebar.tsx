@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({isOpen, toggleSidebar}) => {
                 <>
                   <NavLink to="/events" className={navLinkClass}>
                     <CalendarDays size={18} />
-                    <span>Agenda Informasi</span>
+                    <span>Agenda & Informasi</span>
                   </NavLink>
 
                   <NavLink to="/surat-masuk" className={navLinkClass}>

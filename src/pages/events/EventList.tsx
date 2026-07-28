@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useDataContext } from "../../contexts/DataContext";
 import {
@@ -15,9 +15,8 @@ import {
 import toast from "react-hot-toast";
 import ConfirmationDialog from "../../components/shared/ConfirmationDialog";
 
-// List jenis informasi untuk filter
-const CATEGORIES = [
-  "Semua",
+// List jenis/kategori standar bawaan
+const DEFAULT_CATEGORIES = [
   "Gotong Royong",
   "Kerja Bakti",
   "Rapat",
@@ -26,7 +25,6 @@ const CATEGORIES = [
   "Posyandu",
   "PKK",
   "Dana Desa",
-  "Lainnya",
 ];
 
 const EventList: React.FC = () => {
@@ -39,28 +37,50 @@ const EventList: React.FC = () => {
   } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Filter awal berdasarkan teks pencarian
-  const searchFilteredEvents = events.filter((event) => {
-    return (
-      (event.nama?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (event.deskripsi?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (event.lokasi?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (event.jenis?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+  // Helper function untuk menentukan Kategori Utama dari suatu event
+  const getEventCategoryGroup = (jenisInput?: string): string => {
+    if (!jenisInput || !jenisInput.trim()) return "Lainnya";
+    
+    // Cek apakah jenis termasuk dalam daftar standar (case-insensitive)
+    const matchedCategory = DEFAULT_CATEGORIES.find(
+      (cat) => cat.toLowerCase() === jenisInput.trim().toLowerCase()
     );
-  });
 
-  // Ambil kategori yang akan ditampilkan
-  const activeCategories =
-    selectedCategory === "Semua"
-      ? CATEGORIES.filter((cat) => cat !== "Semua")
-      : [selectedCategory];
+    // Jika cocok dengan kategori standar, kembalikan nama kategorinya.
+    // Jika tidak cocok (berarti kustom dari user), dikelompokkan ke "Lainnya"
+    return matchedCategory ? matchedCategory : "Lainnya";
+  };
 
-  // Hitung total hasil secara keseluruhan
-  const totalResults = searchFilteredEvents.filter((event) =>
-    selectedCategory === "Semua"
-      ? true
-      : (event.jenis || "Lainnya").toLowerCase() === selectedCategory.toLowerCase()
-  ).length;
+  // Filter berdasarkan Search Term (Pencarian Teks)
+  const searchFilteredEvents = useMemo(() => {
+    return (events || []).filter((event) => {
+      const query = searchTerm.toLowerCase();
+      return (
+        (event.nama?.toLowerCase() || "").includes(query) ||
+        (event.deskripsi?.toLowerCase() || "").includes(query) ||
+        (event.lokasi?.toLowerCase() || "").includes(query) ||
+        (event.jenis?.toLowerCase() || "").includes(query)
+      );
+    });
+  }, [events, searchTerm]);
+
+  // Daftar Kategori yang akan ditampilkan di Section Grid
+  const displayCategories = useMemo(() => {
+    if (selectedCategory === "Semua") {
+      // Tampilkan seluruh kategori standar + "Lainnya"
+      return [...DEFAULT_CATEGORIES, "Lainnya"];
+    }
+    return [selectedCategory];
+  }, [selectedCategory]);
+
+  // Hitung total hasil akhir
+  const totalResults = useMemo(() => {
+    return searchFilteredEvents.filter((event) => {
+      if (selectedCategory === "Semua") return true;
+      const group = getEventCategoryGroup(event.jenis);
+      return group.toLowerCase() === selectedCategory.toLowerCase();
+    }).length;
+  }, [searchFilteredEvents, selectedCategory]);
 
   const handleDeleteClick = (event: { _id: string; nama: string }) => {
     setSelectedEvent(event);
@@ -97,7 +117,7 @@ const EventList: React.FC = () => {
         </Link>
       </div>
 
-      {/* Filter Section (Search Bar + Dropdown Kategori) */}
+      {/* Filter Section */}
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center">
         {/* Search Bar */}
         <div className="relative flex-1">
@@ -124,11 +144,13 @@ const EventList: React.FC = () => {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="w-full appearance-none rounded-md border border-gray-300 bg-white pl-9 pr-8 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            {CATEGORIES.map((cat) => (
+            <option value="Semua">Semua Jenis</option>
+            {DEFAULT_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
-                {cat === "Semua" ? "Semua Jenis" : cat}
+                {cat}
               </option>
             ))}
+            <option value="Lainnya">Lainnya</option>
           </select>
           <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
             ▼
@@ -139,14 +161,14 @@ const EventList: React.FC = () => {
       {/* Grid Informasi Kelompok Per Kategori */}
       {totalResults > 0 ? (
         <div className="space-y-10">
-          {activeCategories.map((category) => {
-            // Filter per jenis
-            const categoryEvents = searchFilteredEvents.filter(
-              (event) =>
-                (event.jenis || "Lainnya").toLowerCase() === category.toLowerCase()
-            );
+          {displayCategories.map((category) => {
+            // Filter item berdasarkan kategori kelompoknya
+            const categoryEvents = searchFilteredEvents.filter((event) => {
+              const group = getEventCategoryGroup(event.jenis);
+              return group.toLowerCase() === category.toLowerCase();
+            });
 
-            // Sembunyikan kategori jika tidak ada data
+            // Sembunyikan section jika tidak ada data
             if (categoryEvents.length === 0) return null;
 
             return (
@@ -154,7 +176,7 @@ const EventList: React.FC = () => {
                 key={category}
                 className="bg-gray-50/50 rounded-xl p-5 border border-gray-200/80 shadow-sm"
               >
-                {/* Header Kategori + Pembatas/Divider */}
+                {/* Header Kategori */}
                 <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-md">
@@ -187,11 +209,12 @@ const EventList: React.FC = () => {
                           }}
                         />
                         <div className="p-4">
-                          <div className="mb-2 flex items-center justify-between">
+                          <div className="mb-2 flex items-center justify-between gap-2">
                             <h3 className="text-base font-semibold text-gray-900 line-clamp-1">
                               {event.nama}
                             </h3>
-                            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 whitespace-nowrap ml-2 border border-indigo-100">
+                            {/* Menampilkan Jenis Kustom Asli yang diinput user */}
+                            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 whitespace-nowrap border border-indigo-100 max-w-[120px] truncate">
                               {event.jenis || "Informasi"}
                             </span>
                           </div>
